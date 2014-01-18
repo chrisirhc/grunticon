@@ -22,7 +22,6 @@ module.exports = function( grunt , undefined ) {
 
 	var DirectoryColorfy = require( 'directory-colorfy' );
 	var DirectoryEncoder = require( 'directory-encoder' );
-	var svgToPng = require( 'svg-to-png' );
 
 	var helper = require( path.join( '..', 'lib', 'grunticon-helper' ) );
 
@@ -144,21 +143,54 @@ module.exports = function( grunt , undefined ) {
 		});
 
 		grunt.log.writeln("Converting SVG to PNG");
-		svgToPng.convert( tmp, config.dest, svgToPngOpts )
+		// svgToPng is optional
+		var svgToPng;
+		try {
+			svgToPng = require( 'svg-to-png' );
+		} catch (e) {
+			svgToPng = null;
+		}
+
+		var isShouldConvertToPng = config.datapngcss || config.urlpngcss;
+		if (isShouldConvertToPng) {
+			if (!svgToPng) {
+				grunt.fatal('svg-to-png is not installed. ' +
+							'Install it using `npm install svg-to-png` ' +
+							'or set datapngcss and urlpngcss to null in ' +
+							'options to disable png generation.');
+				done( false );
+			}
+			grunt.log.writeln( "Converting SVG to PNG" );
+		}
+		RSVP.Promise.cast(
+			isShouldConvertToPng ? svgToPng.convert( tmp, config.dest, svgToPngOpts ) : false
+		)
 		.then( function( result , err ){
 			if( err ){
 				grunt.fatal( err );
 			}
 
-			var svgde = new DirectoryEncoder(tmp, path.join( config.dest, config.datasvgcss ), o ),
-				pngde = new DirectoryEncoder( path.join( config.dest, pngfolder ) , path.join( config.dest, config.datapngcss ), o ),
-				pngdefall = new DirectoryEncoder( path.join( config.dest, pngfolder ) , path.join( config.dest, config.urlpngcss ), o2 );
+			var svgde = new DirectoryEncoder( config.src, path.join( config.dest, config.datasvgcss ), o ),
+				pngde, pngdefall;
+
+			if (result !== false) {
+				if (config.datapngcss) {
+					pngde = new DirectoryEncoder( path.join( config.dest, pngfolder ) , path.join( config.dest, config.datapngcss ), o );
+				}
+				if (config.urlpngcss) {
+					pngdefall = new DirectoryEncoder( path.join( config.dest, pngfolder ) , path.join( config.dest, config.urlpngcss ), o2 );
+				}
+			}
 
 			grunt.log.writeln("Writing CSS");
 			try {
 				svgde.encode();
-				pngde.encode();
-				pngdefall.encode();
+				if (pngde) {
+					pngde.encode();
+				}
+				if (pngde) {
+					pngdefall.encode();
+				}
 			} catch( e ){
 				grunt.fatal( e );
 				done( false );
