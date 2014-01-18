@@ -71,12 +71,14 @@ module.exports = function( grunt , undefined ) {
 		// create the output directory
 		grunt.file.mkdir( config.dest );
 
-		// minify the source of the grunticon loader and write that to the output
-		grunt.log.writeln( "grunticon now minifying the stylesheet loader source." );
-		var banner = grunt.file.read( config.files.banner );
-		var min = banner + "\n" + uglify.minify( config.files.loader ).code;
-		grunt.file.write( path.join( config.dest, config.loadersnippet ), min );
-		grunt.log.writeln( "grunticon loader file created." );
+		if (config.loadersnippet) {
+			// minify the source of the grunticon loader and write that to the output
+			grunt.log.writeln( "grunticon now minifying the stylesheet loader source." );
+			var banner = grunt.file.read( config.files.banner );
+			var min = banner + "\n" + uglify.minify( config.files.loader ).code;
+			grunt.file.write( path.join( config.dest, config.loadersnippet ), min );
+			grunt.log.writeln( "grunticon loader file created." );
+		}
 
 		var svgToPngOpts = {
 			pngfolder: pngfolder,
@@ -163,12 +165,13 @@ module.exports = function( grunt , undefined ) {
 				done( false );
 			}
 
-
-			grunt.log.writeln( "Grunticon now creating Preview File" );
-			try {
-				helper.createPreview(config.src, config.dest, config.defaultWidth, config.defaultHeight, min, config.previewhtml, config.cssprefix);
-			} catch(er) {
-				grunt.fatal(er);
+			if (config.previewhtml) {
+				grunt.log.writeln( "Grunticon now creating Preview File" );
+				try {
+					helper.createPreview(config.src, config.dest, config.defaultWidth, config.defaultHeight, min, config.previewhtml, config.cssprefix);
+				} catch(er) {
+					grunt.fatal(er);
+				}
 			}
 
 
