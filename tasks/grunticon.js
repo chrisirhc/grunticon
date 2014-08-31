@@ -68,8 +68,12 @@ module.exports = function( grunt , undefined ) {
 			return file.src[0];
 		});
 
-		config.src = this.files[0].orig.cwd;
-		config.dest = this.files[0].orig.dest;
+		var firstFileOrig = this.files[0].orig;
+		while (firstFileOrig.orig) {
+			firstFileOrig = firstFileOrig.orig;
+		}
+		config.src = firstFileOrig.cwd;
+		config.dest = firstFileOrig.dest;
 
 		if( !config.dest || config.dest && config.dest === "" ){
 			grunt.fatal("The destination must be a directory");
